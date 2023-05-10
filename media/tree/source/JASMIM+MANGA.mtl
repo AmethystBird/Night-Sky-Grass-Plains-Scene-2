@@ -1,0 +1,21 @@
+#
+## Alias OBJ Material File
+# Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
+
+newmtl _Vegetation_Bark_Maple_1
+Ka 0.000000 0.000000 0.000000
+Kd 0.247059 0.333333 0.250980
+Ks 0.330000 0.330000 0.330000
+map_Kd JASMIM+MANGA/_Vegetation_Bark_Maple_1.jpg
+
+newmtl formica_cinza
+Ka 0.000000 0.000000 0.000000
+Kd 0.400000 0.400000 0.400000
+Ks 0.330000 0.330000 0.330000
+
+newmtl _40
+Ka 0.000000 0.000000 0.000000
+Kd 0.392157 0.576471 0.305882
+Ks 0.330000 0.330000 0.330000
+map_Kd JASMIM+MANGA/_40.png
+
