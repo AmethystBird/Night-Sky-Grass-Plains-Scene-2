@@ -97,7 +97,7 @@ float SceneBasic_Uniform::RandomFloat()
     return randomiser.nextFloat();
 }
 
-SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), timePrev(0.0f), rotationSpeed(glm::pi<float>() / 8.0f), plane(50.f, 50.f, 1, 1), skyBox(100.f), particleLifetime(5.5f), nParticles(8000), emitterPosition(1, 0, 0), emitterDirection(-1, 2, 0) {
+SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), timePrev(0.0f), rotationSpeed(glm::pi<float>() / 8.0f), plane(50.f, 50.f, 1, 1), skyBox(100.f), particleLifetime(5.5f), nParticles(8000), emitterPosition(1, 0, 0), emitterDirection(-1, 2, 0), drawBuffer(1) {
     //loading of models
     tree = ObjMesh::load("media/tree/source/JASMIM+MANGA.obj", true, false);
     rock = ObjMesh::load("media/stylized__rock/obj/rock.obj", true, false);
@@ -123,8 +123,16 @@ void SceneBasic_Uniform::initScene()
     progFire.setUniform("particleSize", 0.05f); //OG 0.05f
     progFire.setUniform("gravity", vec3(0.0f, -0.2f, 0.0f));
     progFire.setUniform("emitterPosition", emitterPosition);
+    progFire.setUniform("randomTexture", 1);
+    progFire.setUniform("acceleration", vec3(0.f, -0.f, 0.f));
+    progFire.setUniform("emitter", emitterPosition);
+    progFire.setUniform("emitterBasis", ParticleUtils::makeArbitraryBasis(emitterDirection));
 
+    glActiveTexture(GL_TEXTURE0);
     Texture::loadTexture("media/bluewater.png");
+
+    glActiveTexture(GL_TEXTURE1);
+    ParticleUtils::createRandomTex1D(nParticles * 3);
 
     prog.use();
 
@@ -363,6 +371,7 @@ void SceneBasic_Uniform::render()
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, nParticles);
     glBindVertexArray(0);
     glDepthMask(GL_TRUE);
+    draw
 }
 
 void SceneBasic_Uniform::resize(int w, int h)

@@ -51,6 +51,12 @@ private:
     Grid grid;
     glm::vec3 emitterPosition, emitterDirection;
     float particleLifetime; //probably no need for 'time' as that is likely 'timePrev'
+
+    GLuint positionBuffer[2], velocityBuffer[2], age[2];
+    GLuint particleArray[2];
+    GLuint feedback[2];
+    GLuint drawBuffer;
+
     void BufferInitiation();
     float RandomFloat();
 
