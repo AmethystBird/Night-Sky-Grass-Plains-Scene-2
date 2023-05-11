@@ -22,7 +22,7 @@ out vec4 projectedTextureCoordinates;
 
 uniform mat4 modelViewMatrix;
 uniform mat3 NormalMatrix;
-uniform mat4 ProjectionMatrix;
+uniform mat4 projection;
 
 //For projected texture
 uniform mat4 ProjectorMatrix;

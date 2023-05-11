@@ -97,10 +97,10 @@ float SceneBasic_Uniform::RandomFloat()
     return randomiser.nextFloat();
 }
 
-SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), timePrev(0.0f), rotationSpeed(glm::pi<float>() / 8.0f), plane(50.f, 50.f, 1, 1), skyBox(100.f) {
+SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), timePrev(0.0f), rotationSpeed(glm::pi<float>() / 8.0f), plane(50.f, 50.f, 1, 1), skyBox(100.f), particleLifetime(5.5f), nParticles(8000), emitterPosition(1, 0, 0), emitterDirection(-1, 2, 0) {
     //loading of models
     tree = ObjMesh::load("media/tree/source/JASMIM+MANGA.obj", true, false);
-    rock = ObjMesh::load("media/rock/rock.obj", true, false);
+    rock = ObjMesh::load("media/stylized__rock/obj/rock.obj", true, false);
 }
 
 void SceneBasic_Uniform::initScene()
@@ -118,11 +118,13 @@ void SceneBasic_Uniform::initScene()
 
     progFire.use();
 
-    prog.setUniform("particleTexture", 0);
-    prog.setUniform("particleLifetime", particleLifetime);
-    prog.setUniform("particleSize", 0.05f);
-    prog.setUniform("gravity", vec3(0.0f, -0.2f, 0.0f));
-    prog.setUniform("emitterPosition", emitterPosition);
+    progFire.setUniform("particleTexture", 0);
+    progFire.setUniform("particleLifetime", particleLifetime);
+    progFire.setUniform("particleSize", 0.05f); //OG 0.05f
+    progFire.setUniform("gravity", vec3(0.0f, -0.2f, 0.0f));
+    progFire.setUniform("emitterPosition", emitterPosition);
+
+    Texture::loadTexture("media/bluewater.png");
 
     prog.use();
 
@@ -227,7 +229,7 @@ void SceneBasic_Uniform::compile()
         progFire.compileShader("shader/fire.vert");
         progFire.compileShader("shader/fire.frag");
         progFire.link();
-        progFire.use();
+        //progFire.use();
     }
     catch (GLSLProgramException& e) {
         cerr << e.what() << endl;
@@ -239,10 +241,11 @@ void SceneBasic_Uniform::SetMatrices(GLSLProgram& prog)
 {
     //Setting of matrices & related fog information
     glm::mat4 mv = view * model;
+
     prog.setUniform("modelViewMatrix", mv);
     prog.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
     prog.setUniform("MVP", projection * mv);
-    prog.setUniform("ProjectionMatrix", projection);
+    prog.setUniform("projection", projection);
     prog.setUniform("ModelMatrix", model);
 
     //prog.setUniform("Fog.MinDistance", 1.f);
@@ -271,11 +274,13 @@ void SceneBasic_Uniform::update(float t)
 //Called by scenerunner.h
 void SceneBasic_Uniform::render()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    /*glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     glClear(GL_COLOR_BUFFER_BIT);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);*/
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     /*
     //Draw skybox
@@ -346,9 +351,14 @@ void SceneBasic_Uniform::render()
     view = glm::lookAt(cameraPosition, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     SetMatrices(prog);
     */
+
+    view = glm::lookAt(vec3(3.0f * cos(angle), 1.5f, 3.0f * sin(angle)), vec3(0.f, 1.5f, 0.f), vec3(0.f, 1.f, 0.f));
+    model = glm::mat4(1.f);
+    glDepthMask(GL_FALSE);
+
     progFire.use();
     SetMatrices(progFire);
-    prog.setUniform("time", timePrev);
+    progFire.setUniform("time", timePrev);
     glBindVertexArray(particles);
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, nParticles);
     glBindVertexArray(0);
