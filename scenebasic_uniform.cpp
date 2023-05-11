@@ -31,65 +31,77 @@ using glm::vec3;
 
 void SceneBasic_Uniform::BufferInitiation()
 {
-    glGenBuffers(1, &initialVelocity);
-    glGenBuffers(1, &startTime);
+    glGenBuffers(2, &positionBuffer);
+    glGenBuffers(2, &velocityBuffer);
+    glGenBuffers(2, &age);
 
-    int size = nParticles * sizeof(float);
-    glBindBuffer(GL_ARRAY_BUFFER, initialVelocity);
-    glBufferData(GL_ARRAY_BUFFER, size * 3, 0, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, startTime);
-    glBufferData(GL_ARRAY_BUFFER, size, 0, GL_STATIC_DRAW);
+    int size = nParticles * 3 * sizeof(GLfloat);
+    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer[0]);
+    glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_COPY);
+    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer[1]);
+    glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_COPY);
+    glBindBuffer(GL_ARRAY_BUFFER, velocityBuffer[0]);
+    glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_COPY);
+    glBindBuffer(GL_ARRAY_BUFFER, velocityBuffer[1]);
+    glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_COPY);
+    glBindBuffer(GL_ARRAY_BUFFER, age[0]);
+    glBufferData(GL_ARRAY_BUFFER, nParticles * sizeof(float), 0, GL_DYNAMIC_COPY);
+    glBindBuffer(GL_ARRAY_BUFFER, age[1]);
+    glBufferData(GL_ARRAY_BUFFER, nParticles * sizeof(float), 0, GL_DYNAMIC_COPY);
 
-    glm::mat3 emitterBasis = ParticleUtils::makeArbitraryBasis(emitterDirection);
-    vec3 v(0.0f);
-    float velocity, theta, phi;
-    vector<GLfloat> data(nParticles * 3);
-
-    for (uint32_t i = 0; i < nParticles; i++)
-    {
-        theta = glm::mix(0.0f, glm::pi<float>() / 20.f, RandomFloat());
-        phi = glm::mix(0.0f, glm::two_pi<float>(), RandomFloat());
-
-        v.x = sinf(theta) * cosf(phi);
-        v.y = cosf(theta);
-        v.z = sinf(theta) * sinf(phi);
-
-        velocity = glm::mix(1.25f, 1.5f, RandomFloat());
-        v = glm::normalize(emitterBasis * v) * velocity;
-
-        data[3 * i] = v.x;
-        data[3 * i + 1] = v.y;
-        data[3 * i + 2] = v.z;
-    }
-
-    glBindBuffer(GL_ARRAY_BUFFER, initialVelocity);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, size * 3, data.data());
-
+    vector<GLfloat> tempData(nParticles);
     float rate = particleLifetime / nParticles;
     for (int i = 0; i < nParticles; i++)
     {
-        data[i] = rate * i;
+        tempData[i] = rate * (i - nParticles);
     }
-
-    glBindBuffer(GL_ARRAY_BUFFER, startTime);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, nParticles * sizeof(float), data.data());
-
+    glBindBuffer(GL_ARRAY_BUFFER, age[0]);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, nParticles * sizeof(float), tempData.data());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glGenVertexArrays(1, &particles);
-    glBindVertexArray(particles);
-    glBindBuffer(GL_ARRAY_BUFFER, initialVelocity);
+    glGenVertexArrays(2, particleArray);
+
+    glBindVertexArray(particleArray[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer[0]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, startTime);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, velocityBuffer[0]);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(1);
-    
-    glVertexAttribDivisor(0, 1);
-    glVertexAttribDivisor(1, 1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, age[0]);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(particleArray[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer[1]);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, velocityBuffer[1]);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, age[1]);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
+
+    glad_glGenTransformFeedbacks(2, feedback);
+
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedback[0]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, positionBuffer[0]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1, velocityBuffer[0]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2, age[0]);
+
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedback[1]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, positionBuffer[1]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1, velocityBuffer[1]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2, age[1]);
+
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
 }
 
 float SceneBasic_Uniform::RandomFloat()
@@ -236,6 +248,11 @@ void SceneBasic_Uniform::compile()
 
         progFire.compileShader("shader/fire.vert");
         progFire.compileShader("shader/fire.frag");
+
+        GLuint programHandle = progFire.getHandle();
+        const char* outputNames[] = { "position", "velocity", "age" };
+        glTransformFeedbackVaryings(programHandle, 3, outputNames, GL_SEPARATE_ATTRIBS);
+
         progFire.link();
         //progFire.use();
     }
@@ -263,7 +280,7 @@ void SceneBasic_Uniform::SetMatrices(GLSLProgram& prog)
 //Called by scenerunner.h
 void SceneBasic_Uniform::update(float t)
 {
-    float deltaTime = t - timePrev;
+    deltaTime = t - timePrev;
 
     if (timePrev == 0.f)
     {
@@ -360,18 +377,43 @@ void SceneBasic_Uniform::render()
     SetMatrices(prog);
     */
 
+    progFire.use();
+
+    progFire.setUniform("time", time);
+    progFire.setUniform("deltaTime", deltaTime);
+
+    progFire.setUniform("pass", 1);
+
+    glEnable(GL_RASTERIZER_DISCARD);
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedback[drawBuffer]);
+    glBeginTransformFeedback(GL_POINTS);
+
+    glBindVertexArray(particleArray[1 - drawBuffer]);
+    glVertexAttribDivisor(0, 0);
+    glVertexAttribDivisor(1, 0);
+    glVertexAttribDivisor(2, 0);
+    glDrawArrays(GL_POINTS, 0, nParticles);
+    glBindVertexArray(0);
+
+    glEndTransformFeedback();
+    glDisable(GL_RASTERIZER_DISCARD);
+
+    progFire.setUniform("pass", 2);
+
     view = glm::lookAt(vec3(3.0f * cos(angle), 1.5f, 3.0f * sin(angle)), vec3(0.f, 1.5f, 0.f), vec3(0.f, 1.f, 0.f));
     model = glm::mat4(1.f);
     glDepthMask(GL_FALSE);
 
-    progFire.use();
     SetMatrices(progFire);
-    progFire.setUniform("time", timePrev);
-    glBindVertexArray(particles);
+
+    glBindVertexArray(particleArray[drawBuffer]);
+    glVertexAttribDivisor(0, 0);
+    glVertexAttribDivisor(1, 0);
+    glVertexAttribDivisor(2, 0);
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, nParticles);
     glBindVertexArray(0);
     glDepthMask(GL_TRUE);
-    draw
+    drawBuffer = 1 - drawBuffer;
 }
 
 void SceneBasic_Uniform::resize(int w, int h)

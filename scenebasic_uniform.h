@@ -38,6 +38,7 @@ private:
     float timePrev;
     float angle;
     float rotationSpeed;
+    float deltaTime;
 
     //Dynamic fog attributes
     float fogIntensity = 16.f;

@@ -13,7 +13,6 @@ out vec3 position;
 out vec3 velocity;
 out float age;
 
-uniform float time;
 uniform vec3 gravity = vec3(0.0, -0.05, 0.0);
 uniform float particleLifetime;
 uniform float particleSize = 1.0;
