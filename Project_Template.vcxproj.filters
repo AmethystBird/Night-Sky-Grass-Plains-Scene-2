@@ -63,12 +63,21 @@
     <ClCompile Include="skybox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="helper\grid.cpp">
+      <Filter>helper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\basic_uniform.frag">
       <Filter>shaders</Filter>
     </None>
     <None Include="shader\basic_uniform.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shader\fire.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shader\fire.vert">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
@@ -113,6 +122,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="skybox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\grid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\random.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\particleutils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

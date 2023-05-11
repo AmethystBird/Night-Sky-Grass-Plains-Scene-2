@@ -26,6 +26,77 @@ using glm::vec3;
 //lab 4
 #include "helper/texture.h"
 
+//fire
+#include "helper/particleutils.h"
+
+void SceneBasic_Uniform::BufferInitiation()
+{
+    glGenBuffers(1, &initialVelocity);
+    glGenBuffers(1, &startTime);
+
+    int size = nParticles * sizeof(float);
+    glBindBuffer(GL_ARRAY_BUFFER, initialVelocity);
+    glBufferData(GL_ARRAY_BUFFER, size * 3, 0, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, startTime);
+    glBufferData(GL_ARRAY_BUFFER, size, 0, GL_STATIC_DRAW);
+
+    glm::mat3 emitterBasis = ParticleUtils::makeArbitraryBasis(emitterDirection);
+    vec3 v(0.0f);
+    float velocity, theta, phi;
+    vector<GLfloat> data(nParticles * 3);
+
+    for (uint32_t i = 0; i < nParticles; i++)
+    {
+        theta = glm::mix(0.0f, glm::pi<float>() / 20.f, RandomFloat());
+        phi = glm::mix(0.0f, glm::two_pi<float>(), RandomFloat());
+
+        v.x = sinf(theta) * cosf(phi);
+        v.y = cosf(theta);
+        v.z = sinf(theta) * sinf(phi);
+
+        velocity = glm::mix(1.25f, 1.5f, RandomFloat());
+        v = glm::normalize(emitterBasis * v) * velocity;
+
+        data[3 * i] = v.x;
+        data[3 * i + 1] = v.y;
+        data[3 * i + 2] = v.z;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, initialVelocity);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, size * 3, data.data());
+
+    float rate = particleLifetime / nParticles;
+    for (int i = 0; i < nParticles; i++)
+    {
+        data[i] = rate * i;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, startTime);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, nParticles * sizeof(float), data.data());
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glGenVertexArrays(1, &particles);
+    glBindVertexArray(particles);
+    glBindBuffer(GL_ARRAY_BUFFER, initialVelocity);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, startTime);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(1);
+    
+    glVertexAttribDivisor(0, 1);
+    glVertexAttribDivisor(1, 1);
+
+    glBindVertexArray(0);
+}
+
+float SceneBasic_Uniform::RandomFloat()
+{
+    return randomiser.nextFloat();
+}
+
 SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), timePrev(0.0f), rotationSpeed(glm::pi<float>() / 8.0f), plane(50.f, 50.f, 1, 1), skyBox(100.f) {
     //loading of models
     tree = ObjMesh::load("media/tree/source/JASMIM+MANGA.obj", true, false);
@@ -37,6 +108,23 @@ void SceneBasic_Uniform::initScene()
     compile();
 
     glEnable(GL_DEPTH_TEST);
+
+    //Enabling of alpha blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+
+    BufferInitiation();
+
+    progFire.use();
+
+    prog.setUniform("particleTexture", 0);
+    prog.setUniform("particleLifetime", particleLifetime);
+    prog.setUniform("particleSize", 0.05f);
+    prog.setUniform("gravity", vec3(0.0f, -0.2f, 0.0f));
+    prog.setUniform("emitterPosition", emitterPosition);
+
+    prog.use();
 
     /*--------------------------------
     Setting of MVP
@@ -135,6 +223,11 @@ void SceneBasic_Uniform::compile()
         prog.compileShader("shader/basic_uniform.frag");
         prog.link();
         prog.use();
+
+        progFire.compileShader("shader/fire.vert");
+        progFire.compileShader("shader/fire.frag");
+        progFire.link();
+        progFire.use();
     }
     catch (GLSLProgramException& e) {
         cerr << e.what() << endl;
@@ -142,16 +235,16 @@ void SceneBasic_Uniform::compile()
     }
 }
 
-void SceneBasic_Uniform::SetMatrices()
+void SceneBasic_Uniform::SetMatrices(GLSLProgram& prog)
 {
     //Setting of matrices & related fog information
     glm::mat4 mv = view * model;
-    prog.setUniform("ModelViewMatrix", mv);
+    prog.setUniform("modelViewMatrix", mv);
     prog.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
     prog.setUniform("MVP", projection * mv);
     prog.setUniform("ProjectionMatrix", projection);
     prog.setUniform("ModelMatrix", model);
-    
+
     //prog.setUniform("Fog.MinDistance", 1.f);
     //prog.setUniform("Fog.Color", vec3(0.5f, 0.5f, 0.5f));
 }
@@ -184,11 +277,12 @@ void SceneBasic_Uniform::render()
     glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
 
+    /*
     //Draw skybox
     prog.use();
     model = glm::mat4(1.f);
 
-    SetMatrices();
+    SetMatrices(prog);
 
     //update light position; work on this to get light into position of torch flame
     //glm::vec4 lightPosition = glm::vec4(10.f * cos(angle), 10.f, 10.f * sin(angle), 1.f); //if camera not moving
@@ -227,8 +321,6 @@ void SceneBasic_Uniform::render()
     //Rendering of objects
     skyBox.render();
     plane.render();
-    //teapot.render();
-    //cube.render();
 
     //Scaling & repositioning for tree object render
     glm::vec3 scale = glm::vec3(0.025f, 0.025f, 0.025f);
@@ -236,12 +328,7 @@ void SceneBasic_Uniform::render()
 
     view = glm::translate(view, glm::vec3(0.f, 3.f, -2.f));
 
-    /*glm::mat4 mvp = model * view * projection;
-    scale = glm::vec3(1.0f, -4.0f, 1.0f);
-    mvp = glm::scale(mvp, scale);
-    prog.setUniform("MVP", mvp);*/
-
-    SetMatrices();
+    SetMatrices(prog);
 
     tree->render();
 
@@ -251,20 +338,21 @@ void SceneBasic_Uniform::render()
 
     view = glm::translate(view, glm::vec3(3.f, -2.7f, 2.f));
 
-    SetMatrices();
+    SetMatrices(prog);
     rock->render();
-
-    //glm::vec4 lightPosition = glm::vec4(10.f * cos(angle), 10.f, 10.f * sin(angle), 1.f);
-    //prog.setUniform("lights[0].lightPosition", view * lightPosition);
-    //prog.setUniform("lights[0].lightPosition", view * glm::vec4(20.f, 20.f, 0.f, 1.f));
-
-    //vec3 cameraPosition = vec3(7.f, 2.f, 7.f);
-    //vec3 cameraPosition = vec3(7.f, 20.f, 7.f); //panned out
 
     //Rotating camera position
     vec3 cameraPosition = vec3(7.f * cos(angle), 2.f, 7.f * sin(angle));
     view = glm::lookAt(cameraPosition, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-    SetMatrices();
+    SetMatrices(prog);
+    */
+    progFire.use();
+    SetMatrices(progFire);
+    prog.setUniform("time", timePrev);
+    glBindVertexArray(particles);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, nParticles);
+    glBindVertexArray(0);
+    glDepthMask(GL_TRUE);
 }
 
 void SceneBasic_Uniform::resize(int w, int h)

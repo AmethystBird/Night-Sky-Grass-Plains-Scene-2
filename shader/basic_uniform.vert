@@ -20,7 +20,7 @@ out vec2 textureCoordinates;
 out vec3 vertexPositionFrag;
 out vec4 projectedTextureCoordinates;
 
-uniform mat4 ModelViewMatrix;
+uniform mat4 modelViewMatrix;
 uniform mat3 NormalMatrix;
 uniform mat4 ProjectionMatrix;
 
@@ -35,7 +35,7 @@ uniform mat4 MVP;
 void GetCameraSpaceValues(out vec3 normal, out vec3 position)
 {
 	normal = normalize(NormalMatrix * VertexNormal);
-	position = (ModelViewMatrix * vec4(VertexPosition, 1.0)).xyz;
+	position = (modelViewMatrix * vec4(VertexPosition, 1.0)).xyz;
 }
 
 void main()

@@ -149,6 +149,7 @@
     <ClCompile Include="helper\cube.cpp" />
     <ClCompile Include="helper\glslprogram.cpp" />
     <ClCompile Include="helper\glutils.cpp" />
+    <ClCompile Include="helper\grid.cpp" />
     <ClCompile Include="helper\objmesh.cpp" />
     <ClCompile Include="helper\stb\stb_image.cpp" />
     <ClCompile Include="helper\texture.cpp" />
@@ -161,13 +162,18 @@
   <ItemGroup>
     <None Include="shader\basic_uniform.frag" />
     <None Include="shader\basic_uniform.vert" />
+    <None Include="shader\fire.frag" />
+    <None Include="shader\fire.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helper\cube.h" />
     <ClInclude Include="helper\drawable.h" />
     <ClInclude Include="helper\glslprogram.h" />
     <ClInclude Include="helper\glutils.h" />
+    <ClInclude Include="helper\grid.h" />
     <ClInclude Include="helper\objmesh.h" />
+    <ClInclude Include="helper\particleutils.h" />
+    <ClInclude Include="helper\random.h" />
     <ClInclude Include="helper\scene.h" />
     <ClInclude Include="helper\scenerunner.h" />
     <ClInclude Include="helper\stb\stb_image.h" />

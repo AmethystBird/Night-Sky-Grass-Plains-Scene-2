@@ -11,6 +11,10 @@
 #include "skybox.h"
 #include "helper/objmesh.h"
 
+//fire
+#include "helper/grid.h"
+#include "helper/random.h"
+
 using namespace std;
 
 class SceneBasic_Uniform : public Scene
@@ -20,7 +24,7 @@ private:
 
     //Functions
     void compile();
-    void SetMatrices();
+    void SetMatrices(GLSLProgram& prog);
 
     //Objects
     SkyBox skyBox;
@@ -39,6 +43,16 @@ private:
     float fogIntensity = 16.f;
     float fogChangeSpeed = 1.f / 4.f;
     bool fogIncreasing = true;
+
+    //Fire
+    GLSLProgram progFire;
+    Random randomiser;
+    GLuint initialVelocity, startTime, particles, nParticles;
+    Grid grid;
+    glm::vec3 emitterPosition, emitterDirection;
+    float particleLifetime; //probably no need for 'time' as that is likely 'timePrev'
+    void BufferInitiation();
+    float RandomFloat();
 
 public:
     SceneBasic_Uniform();
