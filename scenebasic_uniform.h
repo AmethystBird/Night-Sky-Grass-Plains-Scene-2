@@ -48,7 +48,8 @@ private:
     //Fire
     GLSLProgram progFire;
     Random randomiser;
-    GLuint initialVelocity, startTime, particles, nParticles;
+    //GLuint initialVelocity, startTime, particles;
+    int nParticles;
     Grid grid;
     glm::vec3 emitterPosition, emitterDirection;
     float particleLifetime; //probably no need for 'time' as that is likely 'timePrev'

@@ -31,9 +31,9 @@ using glm::vec3;
 
 void SceneBasic_Uniform::BufferInitiation()
 {
-    glGenBuffers(2, &positionBuffer);
-    glGenBuffers(2, &velocityBuffer);
-    glGenBuffers(2, &age);
+    glGenBuffers(2, positionBuffer);
+    glGenBuffers(2, velocityBuffer);
+    glGenBuffers(2, age);
 
     int size = nParticles * 3 * sizeof(GLfloat);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer[0]);
@@ -89,7 +89,7 @@ void SceneBasic_Uniform::BufferInitiation()
 
     glBindVertexArray(0);
 
-    glad_glGenTransformFeedbacks(2, feedback);
+    glGenTransformFeedbacks(2, feedback);
 
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedback[0]);
     glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, positionBuffer[0]);
@@ -109,22 +109,30 @@ float SceneBasic_Uniform::RandomFloat()
     return randomiser.nextFloat();
 }
 
-SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), timePrev(0.0f), rotationSpeed(glm::pi<float>() / 8.0f), plane(50.f, 50.f, 1, 1), skyBox(100.f), particleLifetime(5.5f), nParticles(8000), emitterPosition(1, 0, 0), emitterDirection(-1, 2, 0), drawBuffer(1) {
+SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), timePrev(0.0f), rotationSpeed(glm::pi<float>() / 8.0f), plane(50.f, 50.f, 1, 1), skyBox(100.f), particleLifetime(6.0f), nParticles(4000), emitterPosition(1, 0, 0), emitterDirection(-1, 2, 0), drawBuffer(1), deltaTime(0.f) {
     //loading of models
     tree = ObjMesh::load("media/tree/source/JASMIM+MANGA.obj", true, false);
-    rock = ObjMesh::load("media/stylized__rock/obj/rock.obj", true, false);
+    rock = ObjMesh::load("media/rock/rock.obj", true, false);
+    //rock = ObjMesh::load("media/stylized__rock/obj/rock.obj", true, false);
 }
 
 void SceneBasic_Uniform::initScene()
 {
     compile();
 
-    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    //glEnable(GL_DEPTH_TEST); //maybe put this back later
 
     //Enabling of alpha blending
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
+
+    glActiveTexture(GL_TEXTURE0);
+    Texture::loadTexture("media/bluewater.png");
+
+    glActiveTexture(GL_TEXTURE1);
+    ParticleUtils::createRandomTex1D(nParticles * 3);
 
     BufferInitiation();
 
@@ -133,18 +141,10 @@ void SceneBasic_Uniform::initScene()
     progFire.setUniform("particleTexture", 0);
     progFire.setUniform("particleLifetime", particleLifetime);
     progFire.setUniform("particleSize", 0.05f); //OG 0.05f
-    progFire.setUniform("gravity", vec3(0.0f, -0.2f, 0.0f));
-    progFire.setUniform("emitterPosition", emitterPosition);
     progFire.setUniform("randomTexture", 1);
-    progFire.setUniform("acceleration", vec3(0.f, -0.f, 0.f));
+    progFire.setUniform("acceleration", vec3(0.f, -0.5f, 0.f));
     progFire.setUniform("emitter", emitterPosition);
     progFire.setUniform("emitterBasis", ParticleUtils::makeArbitraryBasis(emitterDirection));
-
-    glActiveTexture(GL_TEXTURE0);
-    Texture::loadTexture("media/bluewater.png");
-
-    glActiveTexture(GL_TEXTURE1);
-    ParticleUtils::createRandomTex1D(nParticles * 3);
 
     prog.use();
 
@@ -241,11 +241,6 @@ void SceneBasic_Uniform::initScene()
 void SceneBasic_Uniform::compile()
 {
     try {
-        prog.compileShader("shader/basic_uniform.vert");
-        prog.compileShader("shader/basic_uniform.frag");
-        prog.link();
-        prog.use();
-
         progFire.compileShader("shader/fire.vert");
         progFire.compileShader("shader/fire.frag");
 
@@ -254,7 +249,11 @@ void SceneBasic_Uniform::compile()
         glTransformFeedbackVaryings(programHandle, 3, outputNames, GL_SEPARATE_ATTRIBS);
 
         progFire.link();
-        //progFire.use();
+        progFire.use();
+
+        prog.compileShader("shader/basic_uniform.vert");
+        prog.compileShader("shader/basic_uniform.frag");
+        prog.link();
     }
     catch (GLSLProgramException& e) {
         cerr << e.what() << endl;
@@ -379,7 +378,7 @@ void SceneBasic_Uniform::render()
 
     progFire.use();
 
-    progFire.setUniform("time", time);
+    //progFire.setUniform("time", timePrev);
     progFire.setUniform("deltaTime", deltaTime);
 
     progFire.setUniform("pass", 1);
@@ -400,20 +399,23 @@ void SceneBasic_Uniform::render()
 
     progFire.setUniform("pass", 2);
 
+    //SetMatrices(progFire);
     view = glm::lookAt(vec3(3.0f * cos(angle), 1.5f, 3.0f * sin(angle)), vec3(0.f, 1.5f, 0.f), vec3(0.f, 1.f, 0.f));
     model = glm::mat4(1.f);
+    SetMatrices(progFire);
     glDepthMask(GL_FALSE);
 
-    SetMatrices(progFire);
+    //SetMatrices(progFire);
 
     glBindVertexArray(particleArray[drawBuffer]);
-    glVertexAttribDivisor(0, 0);
-    glVertexAttribDivisor(1, 0);
-    glVertexAttribDivisor(2, 0);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, nParticles);
+    glVertexAttribDivisor(0, 1);
+    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(2, 1);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, nParticles); //added *6
     glBindVertexArray(0);
     glDepthMask(GL_TRUE);
     drawBuffer = 1 - drawBuffer;
+    prog.use();
 }
 
 void SceneBasic_Uniform::resize(int w, int h)
