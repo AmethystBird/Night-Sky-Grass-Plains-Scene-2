@@ -109,7 +109,8 @@ float SceneBasic_Uniform::RandomFloat()
     return randomiser.nextFloat();
 }
 
-SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), timePrev(0.0f), rotationSpeed(glm::pi<float>() / 8.0f), plane(50.f, 50.f, 1, 1), skyBox(100.f), particleLifetime(6.0f), nParticles(4000), emitterPosition(1, 0, 0), emitterDirection(-1, 2, 0), drawBuffer(1), deltaTime(0.f) {
+//nParticles OG: 4,000
+SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), timePrev(0.0f), rotationSpeed(glm::pi<float>() / 8.0f), plane(50.f, 50.f, 1, 1), skyBox(100.f), particleLifetime(6.0f), nParticles(100), emitterPosition(0.5, 0, 0), emitterDirection(-1, 2, 0), drawBuffer(1), deltaTime(0.f) {
     //loading of models
     tree = ObjMesh::load("media/tree/source/JASMIM+MANGA.obj", true, false);
     rock = ObjMesh::load("media/rock/rock.obj", true, false);
@@ -140,7 +141,7 @@ void SceneBasic_Uniform::initScene()
 
     progFire.setUniform("particleTexture", 4);
     progFire.setUniform("particleLifetime", particleLifetime);
-    progFire.setUniform("particleSize", 0.38f); //OG 0.05f
+    progFire.setUniform("particleSize", 2.0f); //OG 0.05f, 0.38f
     progFire.setUniform("randomTexture", 5);
     progFire.setUniform("acceleration", vec3(0.f, 0.5f, 0.f));
     progFire.setUniform("emitter", emitterPosition);
@@ -306,7 +307,6 @@ void SceneBasic_Uniform::render()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    /*
     //Draw skybox
     prog.use();
     model = glm::mat4(1.f);
@@ -371,10 +371,9 @@ void SceneBasic_Uniform::render()
     rock->render();
 
     //Rotating camera position
-    vec3 cameraPosition = vec3(7.f * cos(angle), 2.f, 7.f * sin(angle));
-    view = glm::lookAt(cameraPosition, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    //vec3 cameraPosition = vec3(7.f * cos(angle), 2.f, 7.f * sin(angle));
+    //view = glm::lookAt(cameraPosition, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     SetMatrices(prog);
-    */
 
     progFire.use();
 
@@ -400,8 +399,9 @@ void SceneBasic_Uniform::render()
     progFire.setUniform("pass", 2);
 
     //SetMatrices(progFire);
-    view = glm::lookAt(vec3(3.0f * cos(angle), 1.5f, 3.0f * sin(angle)), vec3(0.f, 1.5f, 0.f), vec3(0.f, 1.f, 0.f));
-    model = glm::mat4(1.f);
+    //view = glm::lookAt(vec3(3.0f * cos(angle), 1.5f, 3.0f * sin(angle)), vec3(0.f, 1.5f, 0.f), vec3(0.f, 1.f, 0.f));
+    //model = glm::mat4(1.f);
+    view = glm::translate(view, glm::vec3(-2.5f, 0.f, -2.5f));
     SetMatrices(progFire);
     glDepthMask(GL_FALSE);
 
@@ -415,6 +415,10 @@ void SceneBasic_Uniform::render()
     glBindVertexArray(0);
     glDepthMask(GL_TRUE);
     drawBuffer = 1 - drawBuffer;
+
+    //Rotating camera position
+    vec3 cameraPosition = vec3(7.f * cos(angle), 2.f, 7.f * sin(angle));
+    view = glm::lookAt(cameraPosition, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     prog.use();
 }
 
