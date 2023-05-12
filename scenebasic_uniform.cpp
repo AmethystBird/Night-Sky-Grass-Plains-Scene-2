@@ -187,14 +187,21 @@ void SceneBasic_Uniform::initScene()
     for (int i = 0; i < 3; i++)
     {
         std::stringstream name;
-        name << "lights[" << i << "].lightPosition";
+        name << "lights[" << i << "].position";
         x = 2.0f * cosf((glm::two_pi<float>() / 3) * i);
         z = 2.0f * sinf((glm::two_pi<float>() / 3) * i);
         prog.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, 0.0f));
     }
 
+    prog.setUniform("lights[0].intensity", vec3(1.0f, 0.0f, 0.0f));
+    prog.setUniform("lights[1].intensity", vec3(0.0f, 1.0f, 0.0f));
+    prog.setUniform("lights[2].intensity", vec3(0.0f, 0.0f, 1.0f));
+    prog.setUniform("material.roughness", 0.5f);
+    prog.setUniform("material.metalicness", true);
+    prog.setUniform("material.colour", 0.1f, 0.1f, 0.1f);
+
     //Fragment lighting colours & intensity
-    prog.setUniform("lights[0].lightAmbient", vec3(0.0f, 0.0f, 0.0f));
+    /*prog.setUniform("lights[0].lightAmbient", vec3(0.0f, 0.0f, 0.0f));
     prog.setUniform("lights[0].lightDiffuse", vec3(1.0f, 1.0f, 1.0f));
     prog.setUniform("lights[0].lightSpecular", vec3(0.5f, 0.5f, 0.5f));
 
@@ -209,7 +216,7 @@ void SceneBasic_Uniform::initScene()
     prog.setUniform("material.materialAmbient", 0.1f, 0.1f, 0.1f);
     prog.setUniform("material.materialDiffuse", 0.3f, 0.3f, 0.3f); //0.9
     prog.setUniform("material.materialSpecular", 0.1f, 0.1f, 0.1f);
-    prog.setUniform("material.shinyness", 45.0f); //180
+    prog.setUniform("material.shinyness", 45.0f); //180*/
 
     //Fog colours, intensity & depth
     prog.setUniform("fog.MaxDistance", 16.f);
@@ -318,7 +325,7 @@ void SceneBasic_Uniform::render()
 
     //Dynamic light position
     glm::vec4 lightPosition = glm::vec4(10.f * cos(angle * 2), 10.f, 10.f * sin(angle * 2), 1.f); //if camera moving
-    prog.setUniform("lights[0].lightPosition", view * lightPosition);
+    prog.setUniform("lights[0].position", view * lightPosition);
 
     //Dynamic fog levels
     if (fogIncreasing == true)

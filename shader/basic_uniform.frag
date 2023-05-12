@@ -1,5 +1,7 @@
 #version 460
 
+const float pi = 3.14159265359;
+
 in vec4 position;
 in vec3 normal;
 in vec2 textureCoordinates;
@@ -21,20 +23,33 @@ layout (binding = 2) uniform samplerCube skyBoxTexture;
 layout (binding = 3) uniform sampler2D projectedTexture;
 //layout (binding = 3) uniform sampler2D rockTexture;
 
+uniform struct lightInfoPhong
+{
+	vec4 position;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+} lightsPhong;
+
+uniform struct MaterialInfoPhong
+{
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+	float shinyness;
+} materialPhong;
+
 uniform struct lightInfo
 {
-	vec4 lightPosition;
-	vec3 lightAmbient;
-	vec3 lightDiffuse;
-	vec3 lightSpecular;
+	vec4 position;
+	vec3 intensity;
 } lights[3];
 
 uniform struct MaterialInfo
 {
-	vec3 materialAmbient;
-	vec3 materialDiffuse;
-	vec3 materialSpecular;
-	float shinyness;
+	float roughness;
+	bool metalicness;
+	vec3 colour;
 } material;
 
 uniform struct FogInfo
@@ -44,69 +59,61 @@ uniform struct FogInfo
     vec3 Colour;
 } fog;
 
-//Calculates ambient, diffuse & specular
-vec3 PhongMultiTexture(int lightIndex, vec3 cameraNormalization, vec4 cameraPosition)
+float GGXDistribution(float nDotH)
 {
-	//Extraction of colour for each fragment
-	vec3 primaryTextureColour = texture(baseTexture, textureCoordinates).rgb;
-	vec3 secondaryTextureColour = texture(overlayTexture, textureCoordinates).rgb;
-
-	vec3 textureColour = mix(primaryTextureColour.rgb, secondaryTextureColour.rgb, 1.0);
-
-	vec3 ambient = lights[lightIndex].lightAmbient * material.materialAmbient * textureColour; //Ambience
-
-	//Diffusion
-	vec3 lightPosToVertexPosDirection = normalize(vec3(lights[lightIndex].lightPosition - (cameraPosition * lights[lightIndex].lightPosition)));
-	float sDotN = max(dot(lightPosToVertexPosDirection, cameraNormalization), 0.0);
-	vec3 diffuse = lights[lightIndex].lightDiffuse * material.materialDiffuse * sDotN * textureColour;
-
-	vec3 specular = vec3(0.0); //Specular
-
-	//If dot product is above 0, reflection can take place
-	if (sDotN > 0.0)
-	{
-		vec3 v = normalize(-cameraPosition.xyz);
-		vec3 reflection = reflect(-lightPosToVertexPosDirection, cameraNormalization);
-		specular = lights[lightIndex].lightSpecular * material.materialSpecular * pow(max(dot(reflection, v), 0.0), material.shinyness);
-	}
-
-	return ambient + diffuse + specular; //Composition of all light components
+	float alpha2 = material.roughness * material.roughness * material.roughness * material.roughness;
+	float denominator = (nDotH * nDotH) * (alpha2 - 1) + 1;
+	return alpha2 / (pi * denominator * denominator);
 }
 
-//Calculates ambient, diffuse & specular
-vec3 Phong(int lightIndex, vec3 cameraNormalization, vec4 cameraPosition)
+float GeomSmith(float dotProduct)
 {
-	//Extraction of colour for each fragment
-	vec3 textureColour = texture(baseTexture, textureCoordinates).rgb;
+	float k = (material.roughness + 1.0) * (material.roughness + 1.0) / 8.0;
+	float denominator = dotProduct * (1 - k) + k;
+	return 1.0 / denominator;
+}
 
-	/*vec3 textureColour = vec3(0.0);
-	if (textureIndexFrag == 0)
+vec3 SchlickFresnel(float lDotH)
+{
+	vec3 f0 = vec3(0.04);
+	if (material.metalicness)
 	{
-		textureColour = texture(baseTexture, textureCoordinates).rgb;
-	}
-	else if (textureIndexFrag == 1)
-	{
-		textureColour = texture(rockTexture, textureCoordinates).rgb;
-	}*/
-
-	vec3 ambient = lights[lightIndex].lightAmbient * material.materialAmbient * textureColour; //Ambience
-
-	//Diffusion
-	vec3 lightPosToVertexPosDirection = normalize(vec3(lights[lightIndex].lightPosition - (cameraPosition * lights[lightIndex].lightPosition)));
-	float sDotN = max(dot(lightPosToVertexPosDirection, cameraNormalization), 0.0);
-	vec3 diffuse = lights[lightIndex].lightDiffuse * material.materialDiffuse * sDotN * textureColour;
-
-	vec3 specular = vec3(0.0); //Specular
-
-	//If dot product is above 0, reflection can take place
-	if (sDotN > 0.0)
-	{
-		vec3 v = normalize(-cameraPosition.xyz);
-		vec3 reflection = reflect(-lightPosToVertexPosDirection, cameraNormalization);
-		specular = lights[lightIndex].lightSpecular * material.materialSpecular * pow(max(dot(reflection, v), 0.0), material.shinyness);
+		f0 = material.colour;
 	}
 
-	return ambient + diffuse + specular; //Composition of all light components
+	return f0 + (1 - f0) * pow(1.0 - lDotH, 5);
+}
+
+vec3 MicroFacetModel(int lightIDX, vec3 normalised, vec3 position)
+{
+	vec3 diffuseBrdf = vec3(0.0);
+	if (!material.metalicness)
+	{
+		diffuseBrdf = material.colour;
+	}
+
+	vec3 l = vec3(0.0), lightI = lights[lightIDX].intensity; //this line may be problematic due to 'lightI'
+	if (lights[lightIDX].position.w == 0.0)
+	{
+		l = normalize(lights[lightIDX].position.xyz);
+	}
+	else
+	{
+		l = lights[lightIDX].position.xyz - position;
+		float distance = length(l);
+		l = normalize(l);
+		lightI /= (distance * distance);
+	}
+
+	vec3 v = normalize(-position);
+	vec3 h = normalize(v + 1);
+	float nDotH = dot(normalised, h);
+	float lDotH = dot(l, h);
+	float nDotL = max(dot(normalised, l), 0.0);
+	float nDotV = dot(normalised, v);
+	vec3 specularBrdf = 0.25 * GGXDistribution(nDotH) * SchlickFresnel(lDotH) * GeomSmith(nDotL) * GeomSmith(nDotV);
+
+	return (diffuseBrdf + pi * specularBrdf) * lightI * nDotL;
 }
 
 vec4 Fog()
@@ -119,7 +126,7 @@ vec4 Fog()
 	vec3 shadeColour;
 	for (int i = 0; i < 3; i++)
 	{
-    	shadeColour += Phong(i, normal, position);
+    	shadeColour += MicroFacetModel(i, normal, position.xyz);
 	}
 
 	vec3 colour = mix(fog.Colour, shadeColour, fogFactor);
@@ -127,6 +134,13 @@ vec4 Fog()
 }
 
 void main() {
+	/*vec3 colour = vec3(0);
+	vec3 normalised = normalize(normal);
+	for (int i = 0; i < 3; i++)
+	{
+		colour += MicroFacetModel(i, normalised, position);
+	}*/
+
 	//vec4 alphaMap = texture(alphaTexture, textureCoordinates);
 	vec3 skyBoxTextureColour = texture(skyBoxTexture, normalize(vertexPositionFrag)).rgb;
 
@@ -138,10 +152,11 @@ void main() {
 	}
 
 	vec3 colour = vec3(0.0); //create colour directly in fragment shader since not passed by vertex shader anymore
+	vec3 normalised = normalize(normal); //apparently needs this, but probs doesn't; appears redundant
 
 	for (int i = 0; i < 3; i++)
 	{
-		colour += PhongMultiTexture(i, normal, position);
+		colour += MicroFacetModel(i, normalised, position.xyz);
 	}
 
 	/*if (textureIndexFrag == 0)
