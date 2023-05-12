@@ -128,21 +128,21 @@ void SceneBasic_Uniform::initScene()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
 
-    glActiveTexture(GL_TEXTURE0);
-    Texture::loadTexture("media/bluewater.png");
+    glActiveTexture(GL_TEXTURE4);
+    Texture::loadTexture("media/fire.png");
 
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE5);
     ParticleUtils::createRandomTex1D(nParticles * 3);
 
     BufferInitiation();
 
     progFire.use();
 
-    progFire.setUniform("particleTexture", 0);
+    progFire.setUniform("particleTexture", 4);
     progFire.setUniform("particleLifetime", particleLifetime);
-    progFire.setUniform("particleSize", 0.05f); //OG 0.05f
-    progFire.setUniform("randomTexture", 1);
-    progFire.setUniform("acceleration", vec3(0.f, -0.5f, 0.f));
+    progFire.setUniform("particleSize", 0.38f); //OG 0.05f
+    progFire.setUniform("randomTexture", 5);
+    progFire.setUniform("acceleration", vec3(0.f, 0.5f, 0.f));
     progFire.setUniform("emitter", emitterPosition);
     progFire.setUniform("emitterBasis", ParticleUtils::makeArbitraryBasis(emitterDirection));
 

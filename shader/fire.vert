@@ -32,25 +32,26 @@ const vec2 textureCoordinates[] = vec2[](vec2(0,0), vec2(1,0), vec2(1,1), vec2(0
 
 vec3 RandomInitialVelocity()
 {
-	float theta = mix(0.0, pi / 8.0, texelFetch(randomTexture, 3 * gl_VertexID, 0).r);
-	float phi = mix(0.0, pi * 2.0, texelFetch(randomTexture, 3 * gl_VertexID + 1, 0).r);
-	float vel = mix(1.25, 1.5, texelFetch(randomTexture, 3 * gl_VertexID + 2, 0).r);
-	vec3 v = vec3(sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi));
-	return normalize(emitterBasis * v) * vel;
+	float vel = mix(0.1, 0.5, texelFetch(randomTexture, 2 * gl_VertexID, 0).r);
+	return emitterBasis * vec3(0, vel, 0);
+}
+
+vec3 RandomInitialPosition()
+{
+	float offset = mix(-2.0, 2.0, texelFetch(randomTexture, 2 * gl_VertexID + 1, 0).r);
+	return emitter * vec3(offset, 0, 0);
 }
 
 void Update()
 {
+	age = vertexAge + deltaTime;
+
 	if (vertexAge < 0 || vertexAge > particleLifetime)
 	{
 		//recycle
-		position = emitter;
+		position = RandomInitialPosition();
 		velocity = RandomInitialVelocity();
-		if (vertexAge < 0)
-		{
-			age = vertexAge + deltaTime;
-		}
-		else
+		if (vertexAge > particleLifetime)
 		{
 			age = (vertexAge - particleLifetime) + deltaTime;
 		}
@@ -60,7 +61,6 @@ void Update()
 		//update
 		position = vertexPosition + vertexVelocity * deltaTime;
 		velocity = vertexVelocity + acceleration * deltaTime;
-		age = vertexAge + deltaTime;
 	}
 }
 
