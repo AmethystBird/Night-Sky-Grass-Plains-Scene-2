@@ -80,6 +80,12 @@
     <None Include="shader\fire.vert">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shader\skyBox.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shader\skyBox.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helper\scene.h">

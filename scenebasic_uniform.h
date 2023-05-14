@@ -59,6 +59,9 @@ private:
     GLuint feedback[2];
     GLuint drawBuffer;
 
+    //skybox
+    GLSLProgram progSkyBox;
+
     void BufferInitiation();
     float RandomFloat();
 

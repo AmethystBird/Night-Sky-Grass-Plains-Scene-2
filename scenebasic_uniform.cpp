@@ -147,6 +147,14 @@ void SceneBasic_Uniform::initScene()
     progFire.setUniform("emitter", emitterPosition);
     progFire.setUniform("emitterBasis", ParticleUtils::makeArbitraryBasis(emitterDirection));
 
+    progSkyBox.use();
+    progSkyBox.setUniform("skyBoxLightAmbient", vec3(0.03125f, 0.f, 0.25f));
+    progSkyBox.setUniform("skyBoxMaterialAmbient", vec3(0.0625f, 0.f, 0.25f));
+
+    GLuint skyBoxTexture = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skyBoxTexture);
+
     prog.use();
 
     /*--------------------------------
@@ -193,12 +201,17 @@ void SceneBasic_Uniform::initScene()
         prog.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, 0.0f));
     }
 
-    prog.setUniform("lights[0].intensity", vec3(1.0f, 0.0f, 0.0f));
-    prog.setUniform("lights[1].intensity", vec3(0.0f, 1.0f, 0.0f));
-    prog.setUniform("lights[2].intensity", vec3(0.0f, 0.0f, 1.0f));
+    /*prog.setUniform("lights[0].intensity", vec3(0.25f, 0.25f, 0.25f));
+    prog.setUniform("lights[1].intensity", vec3(0.125f, 0.0f, 1.0f));
+    prog.setUniform("lights[2].intensity", vec3(0.125f, 0.0f, 1.0f));*/
+
+    prog.setUniform("lights[0].intensity", vec3(100.0f, 100.0f, 100.0f));
+    prog.setUniform("lights[1].intensity", vec3(0.25f, 0.0f, 1.0f));
+    prog.setUniform("lights[2].intensity", vec3(0.0f, 0.25f, 1.0f));
+
     prog.setUniform("material.roughness", 0.5f);
     prog.setUniform("material.metalicness", true);
-    prog.setUniform("material.colour", 0.1f, 0.1f, 0.1f);
+    prog.setUniform("material.colour", 1.0f, 1.0f, 1.0f);
 
     //Fragment lighting colours & intensity
     /*prog.setUniform("lights[0].lightAmbient", vec3(0.0f, 0.0f, 0.0f));
@@ -234,9 +247,9 @@ void SceneBasic_Uniform::initScene()
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, overlayTexture);
 
-    GLuint skyBoxTexture = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
+    /*GLuint skyBoxTexture = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, skyBoxTexture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skyBoxTexture);*/
 
     GLuint mapleLeaves = Texture::loadTexture("media/mapleLeaves/mapleLeaves.png");
     glActiveTexture(GL_TEXTURE3);
@@ -258,6 +271,12 @@ void SceneBasic_Uniform::compile()
 
         progFire.link();
         progFire.use();
+
+        progSkyBox.compileShader("shader/skyBox.vert");
+        progSkyBox.compileShader("shader/skyBox.frag");
+
+        progSkyBox.link();
+        progSkyBox.use();
 
         prog.compileShader("shader/basic_uniform.vert");
         prog.compileShader("shader/basic_uniform.frag");
@@ -314,7 +333,6 @@ void SceneBasic_Uniform::render()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //Draw skybox
     prog.use();
     model = glm::mat4(1.f);
 
@@ -355,7 +373,7 @@ void SceneBasic_Uniform::render()
     prog.setUniform("fog.MaxDistance", fogIntensity);
 
     //Rendering of objects
-    skyBox.render();
+    //skyBox.render();
     plane.render();
 
     //Scaling & repositioning for tree object render
@@ -381,6 +399,11 @@ void SceneBasic_Uniform::render()
     //vec3 cameraPosition = vec3(7.f * cos(angle), 2.f, 7.f * sin(angle));
     //view = glm::lookAt(cameraPosition, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     SetMatrices(prog);
+
+    //Skybox
+    progSkyBox.use();
+    SetMatrices(progSkyBox);
+    skyBox.render();
 
     progFire.use();
 

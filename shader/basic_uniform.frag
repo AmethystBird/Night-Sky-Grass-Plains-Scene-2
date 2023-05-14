@@ -29,9 +29,9 @@ uniform struct lightInfoPhong
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
-} lightsPhong;
+} lightsPhong[3];
 
-uniform struct MaterialInfoPhong
+uniform struct materialInfoPhong
 {
 	vec3 ambient;
 	vec3 diffuse;
@@ -58,6 +58,42 @@ uniform struct FogInfo
     float MinDistance;
     vec3 Colour;
 } fog;
+
+//Calculates ambient, diffuse & specular
+vec3 Phong(int lightIndex, vec3 cameraNormalization, vec4 cameraPosition)
+{
+	//Extraction of colour for each fragment
+	vec3 textureColour = texture(baseTexture, textureCoordinates).rgb;
+
+	/*vec3 textureColour = vec3(0.0);
+	if (textureIndexFrag == 0)
+	{
+		textureColour = texture(baseTexture, textureCoordinates).rgb;
+	}
+	else if (textureIndexFrag == 1)
+	{
+		textureColour = texture(rockTexture, textureCoordinates).rgb;
+	}*/
+
+	vec3 ambient = lightsPhong[lightIndex].ambient * materialPhong.ambient * textureColour; //Ambience
+
+	//Diffusion
+	vec3 lightPosToVertexPosDirection = normalize(vec3(lightsPhong[lightIndex].position - (cameraPosition * lightsPhong[lightIndex].position)));
+	float sDotN = max(dot(lightPosToVertexPosDirection, cameraNormalization), 0.0);
+	vec3 diffuse = lightsPhong[lightIndex].diffuse * materialPhong.diffuse * sDotN * textureColour;
+
+	vec3 specular = vec3(0.0); //Specular
+
+	//If dot product is above 0, reflection can take place
+	if (sDotN > 0.0)
+	{
+		vec3 v = normalize(-cameraPosition.xyz);
+		vec3 reflection = reflect(-lightPosToVertexPosDirection, cameraNormalization);
+		specular = lightsPhong[lightIndex].specular * materialPhong.specular * pow(max(dot(reflection, v), 0.0), materialPhong.shinyness);
+	}
+
+	return ambient + diffuse + specular; //Composition of all light components
+}
 
 float GGXDistribution(float nDotH)
 {
@@ -126,7 +162,7 @@ vec4 Fog()
 	vec3 shadeColour;
 	for (int i = 0; i < 3; i++)
 	{
-    	shadeColour += MicroFacetModel(i, normal, position.xyz);
+    	shadeColour += Phong(i, normal, position);
 	}
 
 	vec3 colour = mix(fog.Colour, shadeColour, fogFactor);
@@ -142,7 +178,8 @@ void main() {
 	}*/
 
 	//vec4 alphaMap = texture(alphaTexture, textureCoordinates);
-	vec3 skyBoxTextureColour = texture(skyBoxTexture, normalize(vertexPositionFrag)).rgb;
+	
+	//vec3 skyBoxTextureColour = texture(skyBoxTexture, normalize(vertexPositionFrag)).rgb;
 
 	//Temporarily removed
 	vec3 projectedTextureColour = vec3(0.0);
@@ -175,5 +212,6 @@ void main() {
 	}*/
 
 	vec4 fogColour = Fog();
-	FragColor = fogColour + vec4(skyBoxTextureColour, 1.0) + vec4(LightIntensity, 1.0) + vec4(colour + projectedTextureColour, 1);
+	//FragColor = fogColour + vec4(skyBoxTextureColour, 1.0) + vec4(LightIntensity, 1.0) + vec4(colour + projectedTextureColour, 1);
+	FragColor = fogColour + vec4(LightIntensity, 1.0) + vec4(colour + projectedTextureColour, 1);
 }

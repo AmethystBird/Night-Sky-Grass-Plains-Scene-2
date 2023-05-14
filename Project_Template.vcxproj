@@ -164,6 +164,8 @@
     <None Include="shader\basic_uniform.vert" />
     <None Include="shader\fire.frag" />
     <None Include="shader\fire.vert" />
+    <None Include="shader\skyBox.frag" />
+    <None Include="shader\skyBox.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helper\cube.h" />
