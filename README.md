@@ -3,12 +3,12 @@
 ### Development Hardware
  - IDE: Visual Studio 2022
  - OS: Windows 11
-### Overview "How does it work?"
+### Overview
 #### 
 This project is a continuation of the Night Sky and Grass Plains OpenGL and GLSL scene program from the first COMP3015 coursework. The Night Sky Grass Plains project contains a scene mostly as described by the project's title: natural features combined with an eerie atmosphere. While being viewed, the camera will rotate around the scene in order to give the user a better view of the entire scene. The scene also contains fog, which will dynamically change in depth.
 #### Coursework 2 Changes
 In this implementation of the Night Sky and Grass Plains scene, the three Blinn-Phong lights present in the first iteration have been replaced with three PBR based lights for this iteration. In addition, fire particles with feedback were added, forming a green flame surrounding the tree in the scene. While the skybox was successfully implemented in the first iteration with no issues, the skybox in this iteration has a minor visual artifact, likely caused by the PBR lighting model.
-### Architecture "How does your code fit together ..."
+### Architecture
 #### Overview
 This program contains 3rd party code written specifically for the related module by the organisation running it. That is, the project template base project. Expectable libraries are also present in this program. None of the aforementioned code is directly discussed; only that which has been written by the author of this program is discussed.
 #### Scenebasic Uniform Header & CPP Files
