@@ -16,12 +16,12 @@ uniform struct FogInfo
 uniform vec3 skyBoxLightAmbient;
 uniform vec3 skyBoxMaterialAmbient;
 
-//Calculates ambient, diffuse & specular
+//Calculates ambient light only; no diffuse & specular lighting
 vec3 AmbientLight()
 {
-	vec3 ambient = skyBoxLightAmbient * skyBoxMaterialAmbient;// * textureColour; //Ambience
+	vec3 ambient = skyBoxLightAmbient * skyBoxMaterialAmbient;
 
-	return ambient; //Only ambient
+	return ambient;
 }
 
 vec4 Fog()
@@ -51,6 +51,5 @@ void main() {
 	vec3 skyBoxTextureColour = texture(skyBoxTexture, normalize(vertexPositionFrag)).rgb;
 	vec4 fogColour = Fog();
 
-	//FragColor = vec4(skyBoxTextureColour, 1.0) + vec4(colour, 1);
 	FragColor = vec4(skyBoxTextureColour, 1.0) + vec4(colour, 1) + fogColour;
 }

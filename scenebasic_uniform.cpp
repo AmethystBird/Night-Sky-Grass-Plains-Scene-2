@@ -33,7 +33,7 @@ void SceneBasic_Uniform::BufferInitiation()
 {
     glGenBuffers(2, positionBuffer);
     glGenBuffers(2, velocityBuffer);
-    glGenBuffers(2, age);
+    glGenBuffers(2, particleAge);
 
     int size = nParticles * 3 * sizeof(GLfloat);
     glBindBuffer(GL_ARRAY_BUFFER, positionBuffer[0]);
@@ -44,19 +44,19 @@ void SceneBasic_Uniform::BufferInitiation()
     glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_COPY);
     glBindBuffer(GL_ARRAY_BUFFER, velocityBuffer[1]);
     glBufferData(GL_ARRAY_BUFFER, size, 0, GL_DYNAMIC_COPY);
-    glBindBuffer(GL_ARRAY_BUFFER, age[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, particleAge[0]);
     glBufferData(GL_ARRAY_BUFFER, nParticles * sizeof(float), 0, GL_DYNAMIC_COPY);
-    glBindBuffer(GL_ARRAY_BUFFER, age[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, particleAge[1]);
     glBufferData(GL_ARRAY_BUFFER, nParticles * sizeof(float), 0, GL_DYNAMIC_COPY);
 
-    vector<GLfloat> tempData(nParticles);
+    vector<GLfloat> temporaryData(nParticles);
     float rate = particleLifetime / nParticles;
     for (int i = 0; i < nParticles; i++)
     {
-        tempData[i] = rate * (i - nParticles);
+        temporaryData[i] = rate * (i - nParticles);
     }
-    glBindBuffer(GL_ARRAY_BUFFER, age[0]);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, nParticles * sizeof(float), tempData.data());
+    glBindBuffer(GL_ARRAY_BUFFER, particleAge[0]);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, nParticles * sizeof(float), temporaryData.data());
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glGenVertexArrays(2, particleArray);
@@ -70,7 +70,7 @@ void SceneBasic_Uniform::BufferInitiation()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(1);
 
-    glBindBuffer(GL_ARRAY_BUFFER, age[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, particleAge[0]);
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(2);
 
@@ -83,7 +83,7 @@ void SceneBasic_Uniform::BufferInitiation()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(1);
 
-    glBindBuffer(GL_ARRAY_BUFFER, age[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, particleAge[1]);
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(2);
 
@@ -94,12 +94,12 @@ void SceneBasic_Uniform::BufferInitiation()
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedback[0]);
     glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, positionBuffer[0]);
     glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1, velocityBuffer[0]);
-    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2, age[0]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2, particleAge[0]);
 
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedback[1]);
     glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, positionBuffer[1]);
     glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 1, velocityBuffer[1]);
-    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2, age[1]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 2, particleAge[1]);
 
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
 }
@@ -205,10 +205,7 @@ void SceneBasic_Uniform::initScene()
         prog.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, 0.0f));
     }
 
-    /*prog.setUniform("lights[0].intensity", vec3(0.25f, 0.25f, 0.25f));
-    prog.setUniform("lights[1].intensity", vec3(0.125f, 0.0f, 1.0f));
-    prog.setUniform("lights[2].intensity", vec3(0.125f, 0.0f, 1.0f));*/
-
+    //PBR lighting
     prog.setUniform("lights[0].intensity", vec3(100.0f, 100.0f, 100.0f));
     prog.setUniform("lights[1].intensity", vec3(0.25f, 0.0f, 1.0f));
     prog.setUniform("lights[2].intensity", vec3(0.0f, 0.25f, 1.0f));
@@ -216,24 +213,6 @@ void SceneBasic_Uniform::initScene()
     prog.setUniform("material.roughness", 0.5f);
     prog.setUniform("material.metalicness", true);
     prog.setUniform("material.colour", 1.0f, 1.0f, 1.0f);
-
-    //Fragment lighting colours & intensity
-    /*prog.setUniform("lights[0].lightAmbient", vec3(0.0f, 0.0f, 0.0f));
-    prog.setUniform("lights[0].lightDiffuse", vec3(1.0f, 1.0f, 1.0f));
-    prog.setUniform("lights[0].lightSpecular", vec3(0.5f, 0.5f, 0.5f));
-
-    prog.setUniform("lights[1].lightAmbient", vec3(0.25f, 0.0625f, 0.0625f));
-    prog.setUniform("lights[1].lightDiffuse", vec3(0.0f, 0.0f, 0.0f));
-    prog.setUniform("lights[1].lightSpecular", vec3(0.0f, 0.0f, 0.0f));
-
-    prog.setUniform("lights[2].lightAmbient", vec3(0.25f, 0.25f, 2.0f));
-    prog.setUniform("lights[2].lightDiffuse", vec3(0.0f, 0.0f, 0.f));
-    prog.setUniform("lights[2].lightSpecular", vec3(0.0f, 0.0f, 0.0f));
-
-    prog.setUniform("material.materialAmbient", 0.1f, 0.1f, 0.1f);
-    prog.setUniform("material.materialDiffuse", 0.3f, 0.3f, 0.3f); //0.9
-    prog.setUniform("material.materialSpecular", 0.1f, 0.1f, 0.1f);
-    prog.setUniform("material.shinyness", 45.0f); //180*/
 
     //Fog colours, intensity & depth
     prog.setUniform("fog.MaxDistance", 16.f);
@@ -251,10 +230,6 @@ void SceneBasic_Uniform::initScene()
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, overlayTexture);
 
-    /*GLuint skyBoxTexture = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, skyBoxTexture);*/
-
     GLuint mapleLeaves = Texture::loadTexture("media/mapleLeaves/mapleLeaves.png");
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, mapleLeaves);
@@ -270,7 +245,7 @@ void SceneBasic_Uniform::compile()
         progFire.compileShader("shader/fire.frag");
 
         GLuint programHandle = progFire.getHandle();
-        const char* outputNames[] = { "position", "velocity", "age" };
+        const char* outputNames[] = { "position", "velocity", "particleAge" };
         glTransformFeedbackVaryings(programHandle, 3, outputNames, GL_SEPARATE_ATTRIBS);
 
         progFire.link();
@@ -359,12 +334,6 @@ void SceneBasic_Uniform::update(float t)
 //Called by scenerunner.h
 void SceneBasic_Uniform::render()
 {
-    /*glClear(GL_COLOR_BUFFER_BIT);
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClear(GL_DEPTH_BUFFER_BIT);*/
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     prog.use();
@@ -379,6 +348,7 @@ void SceneBasic_Uniform::render()
     glm::vec4 lightPosition = glm::vec4(10.f * cos(angle * 2), 10.f, 10.f * sin(angle * 2), 1.f); //if camera moving
     prog.setUniform("lights[0].position", view * lightPosition);
 
+    //Sets dynamic fog level (also applies to skybox program)
     DynamicFog();
 
     prog.setUniform("fog.MaxDistance", fogIntensity);
@@ -415,7 +385,7 @@ void SceneBasic_Uniform::render()
     progSkyBox.use();
     SetMatrices(progSkyBox);
     skyBox.render();
-    progSkyBox.setUniform("fog.MaxDistance", fogIntensity);
+    progSkyBox.setUniform("fog.MaxDistance", fogIntensity); //fog also needs to match in skybox shader, otherwise not affected
 
     progFire.use();
 

@@ -13,9 +13,12 @@ out vec2 textureCoordinate;
 
 out vec3 position;
 out vec3 velocity;
-out float age;
+out float particleAge;
 
-//uniform float time;
+uniform mat4 modelViewMatrix;
+uniform mat4 projection;
+
+//Fire particles
 uniform float particleLifetime;
 uniform float particleSize;
 uniform int pass;
@@ -24,41 +27,40 @@ uniform vec3 acceleration;
 uniform mat3 emitterBasis;
 uniform vec3 emitter = vec3(0);
 
-uniform mat4 modelViewMatrix;
-uniform mat4 projection;
+const vec3 offsets[] = vec3[](vec3(-0.5, -0.5, 0), vec3(0.5, -0.5, 0), vec3(0.5, 0.5, 0), vec3(-0.5, -0.5, 0), vec3(0.5, 0.5, 0), vec3(-0.5, 0.5, 0)); //Particle offset in relation to camera position
+const vec2 textureCoordinates[] = vec2[](vec2(0,0), vec2(1,0), vec2(1,1), vec2(0,0), vec2(1,1), vec2(0,1)); //Texture coordinates per particle vertex
 
-const vec3 offsets[] = vec3[](vec3(-0.5, -0.5, 0), vec3(0.5, -0.5, 0), vec3(0.5, 0.5, 0), vec3(-0.5, -0.5, 0), vec3(0.5, 0.5, 0), vec3(-0.5, 0.5, 0));
-const vec2 textureCoordinates[] = vec2[](vec2(0,0), vec2(1,0), vec2(1,1), vec2(0,0), vec2(1,1), vec2(0,1));
-
-vec3 RandomInitialVelocity()
+//Particle initial velocity determiner
+vec3 RandomInitialParticleVelocity()
 {
-	float vel = mix(0.1, 0.5, texelFetch(randomTexture, 2 * gl_VertexID, 0).r);
-	return emitterBasis * vec3(0, vel, 0);
+	float particleVelocity = mix(0.1, 0.5, texelFetch(randomTexture, 2 * gl_VertexID, 0).r);
+	return emitterBasis * vec3(0, particleVelocity, 0);
 }
 
-vec3 RandomInitialPosition()
+//Particle initial position determiner
+vec3 RandomInitialParticlePosition()
 {
-	float offset = mix(-2.0, 2.0, texelFetch(randomTexture, 2 * gl_VertexID + 1, 0).r);
-	return emitter * vec3(offset, 0, 0);
+	float particleOffset = mix(-2.0, 2.0, texelFetch(randomTexture, 2 * gl_VertexID + 1, 0).r);
+	return emitter * vec3(particleOffset, 0, 0);
 }
 
+//Particle updater
 void Update()
 {
-	age = vertexAge + deltaTime;
+	particleAge = vertexAge + deltaTime;
 
-	if (vertexAge < 0 || vertexAge > particleLifetime)
+	if (vertexAge < 0 || vertexAge > particleLifetime) //Particle expiration
 	{
-		//recycle
-		position = RandomInitialPosition();
-		velocity = RandomInitialVelocity();
+		position = RandomInitialParticlePosition();
+		velocity = RandomInitialParticleVelocity();
+
 		if (vertexAge > particleLifetime)
 		{
-			age = (vertexAge - particleLifetime) + deltaTime;
+			particleAge = (vertexAge - particleLifetime) + deltaTime;
 		}
 	}
-	else
+	else //Particle updation
 	{
-		//update
 		position = vertexPosition + vertexVelocity * deltaTime;
 		velocity = vertexVelocity + acceleration * deltaTime;
 	}
