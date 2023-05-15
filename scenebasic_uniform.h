@@ -41,7 +41,7 @@ private:
     float deltaTime;
 
     //Dynamic fog attributes
-    float DynamicFog();
+    void DynamicFog();
     float fogIntensity = 16.f;
     float fogChangeSpeed = 1.f / 4.f;
     bool fogIncreasing = true;

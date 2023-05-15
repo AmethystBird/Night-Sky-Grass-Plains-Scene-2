@@ -283,7 +283,7 @@ void SceneBasic_Uniform::SetMatrices(GLSLProgram& prog)
     //prog.setUniform("Fog.Color", vec3(0.5f, 0.5f, 0.5f));
 }
 
-float SceneBasic_Uniform::DynamicFog()
+void SceneBasic_Uniform::DynamicFog()
 {
     //Dynamic fog levels
     if (fogIncreasing == true)
@@ -310,7 +310,6 @@ float SceneBasic_Uniform::DynamicFog()
             fogIntensity = fogIntensity + fogChangeSpeed;
         }
     }
-    return fogIntensity;
 }
 
 //Called by scenerunner.h
