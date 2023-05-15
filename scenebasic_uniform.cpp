@@ -151,6 +151,10 @@ void SceneBasic_Uniform::initScene()
     progSkyBox.setUniform("skyBoxLightAmbient", vec3(0.03125f, 0.f, 0.25f));
     progSkyBox.setUniform("skyBoxMaterialAmbient", vec3(0.0625f, 0.f, 0.25f));
 
+    progSkyBox.setUniform("fog.MaxDistance", 16.f);
+    progSkyBox.setUniform("fog.MinDistance", 0.f);
+    progSkyBox.setUniform("fog.Colour", 0.0f, 0.25f, 0.5f);
+
     GLuint skyBoxTexture = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, skyBoxTexture);
@@ -303,6 +307,36 @@ void SceneBasic_Uniform::SetMatrices(GLSLProgram& prog)
     //prog.setUniform("Fog.Color", vec3(0.5f, 0.5f, 0.5f));
 }
 
+float SceneBasic_Uniform::DynamicFog()
+{
+    //Dynamic fog levels
+    if (fogIncreasing == true)
+    {
+        if (fogIntensity < 192.f)
+        {
+            fogIntensity = fogIntensity + fogChangeSpeed;
+        }
+        else
+        {
+            fogIncreasing = false;
+            fogIntensity = fogIntensity - fogChangeSpeed;
+        }
+    }
+    else if (fogIncreasing == false)
+    {
+        if (fogIntensity > 16.f)
+        {
+            fogIntensity = fogIntensity - fogChangeSpeed;
+        }
+        else
+        {
+            fogIncreasing = true;
+            fogIntensity = fogIntensity + fogChangeSpeed;
+        }
+    }
+    return fogIntensity;
+}
+
 //Called by scenerunner.h
 void SceneBasic_Uniform::update(float t)
 {
@@ -345,31 +379,8 @@ void SceneBasic_Uniform::render()
     glm::vec4 lightPosition = glm::vec4(10.f * cos(angle * 2), 10.f, 10.f * sin(angle * 2), 1.f); //if camera moving
     prog.setUniform("lights[0].position", view * lightPosition);
 
-    //Dynamic fog levels
-    if (fogIncreasing == true)
-    {
-        if (fogIntensity < 192.f)
-        {
-            fogIntensity = fogIntensity + fogChangeSpeed;
-        }
-        else
-        {
-            fogIncreasing = false;
-            fogIntensity = fogIntensity - fogChangeSpeed;
-        }
-    }
-    else if (fogIncreasing == false)
-    {
-        if (fogIntensity > 16.f)
-        {
-            fogIntensity = fogIntensity - fogChangeSpeed;
-        }
-        else
-        {
-            fogIncreasing = true;
-            fogIntensity = fogIntensity + fogChangeSpeed;
-        }
-    }
+    DynamicFog();
+
     prog.setUniform("fog.MaxDistance", fogIntensity);
 
     //Rendering of objects
@@ -404,6 +415,7 @@ void SceneBasic_Uniform::render()
     progSkyBox.use();
     SetMatrices(progSkyBox);
     skyBox.render();
+    progSkyBox.setUniform("fog.MaxDistance", fogIntensity);
 
     progFire.use();
 
