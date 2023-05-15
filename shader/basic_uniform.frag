@@ -65,16 +65,6 @@ vec3 Phong(int lightIndex, vec3 cameraNormalization, vec4 cameraPosition)
 	//Extraction of colour for each fragment
 	vec3 textureColour = texture(baseTexture, textureCoordinates).rgb;
 
-	/*vec3 textureColour = vec3(0.0);
-	if (textureIndexFrag == 0)
-	{
-		textureColour = texture(baseTexture, textureCoordinates).rgb;
-	}
-	else if (textureIndexFrag == 1)
-	{
-		textureColour = texture(rockTexture, textureCoordinates).rgb;
-	}*/
-
 	vec3 ambient = lightsPhong[lightIndex].ambient * materialPhong.ambient * textureColour; //Ambience
 
 	//Diffusion
@@ -170,18 +160,6 @@ vec4 Fog()
 }
 
 void main() {
-	/*vec3 colour = vec3(0);
-	vec3 normalised = normalize(normal);
-	for (int i = 0; i < 3; i++)
-	{
-		colour += MicroFacetModel(i, normalised, position);
-	}*/
-
-	//vec4 alphaMap = texture(alphaTexture, textureCoordinates);
-	
-	//vec3 skyBoxTextureColour = texture(skyBoxTexture, normalize(vertexPositionFrag)).rgb;
-
-	//Temporarily removed
 	vec3 projectedTextureColour = vec3(0.0);
 	if (projectedTextureCoordinates.z > 0.0) //if value is positive, means in view of projector, so render
 	{
@@ -195,21 +173,6 @@ void main() {
 	{
 		colour += MicroFacetModel(i, normalised, position.xyz);
 	}
-
-	/*if (textureIndexFrag == 0)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			colour += PhongMultiTexture(i, normal, position);
-		}
-	}
-	else if (textureIndexFrag == 1)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			colour += Phong(i, normal, position);
-		}
-	}*/
 
 	vec4 fogColour = Fog();
 	//FragColor = fogColour + vec4(skyBoxTextureColour, 1.0) + vec4(LightIntensity, 1.0) + vec4(colour + projectedTextureColour, 1);
