@@ -130,7 +130,7 @@ void SceneBasic_Uniform::initScene()
     glEnable(GL_DEPTH_TEST);
 
     glActiveTexture(GL_TEXTURE4);
-    Texture::loadTexture("media/fire.png");
+    Texture::loadTexture("media/undeadFire.png");
 
     glActiveTexture(GL_TEXTURE5);
     ParticleUtils::createRandomTex1D(nParticles * 3);
@@ -206,8 +206,9 @@ void SceneBasic_Uniform::initScene()
     }
 
     //PBR lighting
-    prog.setUniform("lights[0].intensity", vec3(100.0f, 100.0f, 100.0f));
-    prog.setUniform("lights[1].intensity", vec3(0.25f, 0.0f, 1.0f));
+    prog.setUniform("lights[0].intensity", vec3(75.0f, 75.0f, 75.0f));
+    prog.setUniform("lights[1].intensity", vec3(0.0f, 1.0f, 0.25f));
+    //prog.setUniform("lights[1].intensity", vec3(0.25f, 0.0f, 1.0f));
     prog.setUniform("lights[2].intensity", vec3(0.0f, 0.25f, 1.0f));
 
     prog.setUniform("material.roughness", 0.5f);

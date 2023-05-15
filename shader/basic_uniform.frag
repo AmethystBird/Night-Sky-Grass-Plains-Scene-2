@@ -110,7 +110,7 @@ vec3 SchlickFresnel(float lDotH)
 	return f0 + (1 - f0) * pow(1.0 - lDotH, 5);
 }
 
-vec3 MicroFacetModel(int lightIDX, vec3 normalised, vec3 position)
+vec3 MicroFacetModel(int lightIDX, vec3 surfaceNormal, vec3 position)
 {
 	vec3 diffuseBrdf = vec3(0.0);
 	if (!material.metalicness)
@@ -118,28 +118,28 @@ vec3 MicroFacetModel(int lightIDX, vec3 normalised, vec3 position)
 		diffuseBrdf = material.colour;
 	}
 
-	vec3 l = vec3(0.0), lightI = lights[lightIDX].intensity; //this line may be problematic due to 'lightI'
+	vec3 light = vec3(0.0), lightIndex = lights[lightIDX].intensity; //this line may be problematic due to 'lightIndex'
 	if (lights[lightIDX].position.w == 0.0)
 	{
-		l = normalize(lights[lightIDX].position.xyz);
+		light = normalize(lights[lightIDX].position.xyz);
 	}
 	else
 	{
-		l = lights[lightIDX].position.xyz - position;
-		float distance = length(l);
-		l = normalize(l);
-		lightI /= (distance * distance);
+		light = lights[lightIDX].position.xyz - position;
+		float distance = length(light);
+		light = normalize(light);
+		lightIndex /= (distance * distance);
 	}
 
-	vec3 v = normalize(-position);
-	vec3 h = normalize(v + 1);
-	float nDotH = dot(normalised, h);
-	float lDotH = dot(l, h);
-	float nDotL = max(dot(normalised, l), 0.0);
-	float nDotV = dot(normalised, v);
+	vec3 directionToCamera = normalize(-position);
+	vec3 lightToCameraIntermediary = normalize(directionToCamera + 1);
+	float nDotH = dot(surfaceNormal, lightToCameraIntermediary);
+	float lDotH = dot(light, lightToCameraIntermediary);
+	float nDotL = max(dot(surfaceNormal, light), 0.0);
+	float nDotV = dot(surfaceNormal, directionToCamera);
 	vec3 specularBrdf = 0.25 * GGXDistribution(nDotH) * SchlickFresnel(lDotH) * GeomSmith(nDotL) * GeomSmith(nDotV);
 
-	return (diffuseBrdf + pi * specularBrdf) * lightI * nDotL;
+	return (diffuseBrdf + pi * specularBrdf) * lightIndex * nDotL;
 }
 
 vec4 Fog()

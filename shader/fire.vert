@@ -73,7 +73,7 @@ void Render()
 	if (vertexAge >= 0.0)
 	{
 		cameraPosition = (modelViewMatrix * vec4(vertexPosition, 1)).xyz + offsets[gl_VertexID] * particleSize;
-		transparency = clamp(1.0 - vertexAge / particleLifetime, 0, 1);
+		transparency = clamp(1.0 - vertexAge / particleLifetime, 0, 1); //transparency modified based on age of fire particle
 	}
 	textureCoordinate = textureCoordinates[gl_VertexID];
 	gl_Position = projection * vec4(cameraPosition, 1);
