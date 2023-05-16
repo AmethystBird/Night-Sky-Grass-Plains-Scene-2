@@ -25,7 +25,9 @@ The fire shader program maintains the sole purpose of rendering the fire particl
 ### Demonstrations
  - [YouTube Video](https://www.youtube.com/watch?v=Mw0wJh4uw8w)
  - [GitHub Repository](https://github.com/AmethystBird/COMP3015CW2)
-
+### Files
+ - VisualStudioProject zip file contains the Visual Studio Project
+ - ExecutableProgram zip file contains an executable project with associated files
 ### References
  - [Skybox](https://www.pngegg.com/en/png-exlhy)
  - [Maple Leaves](https://www.rawpixel.com/image/2613522/free-illustration-image-leaves-flower-autumn)
