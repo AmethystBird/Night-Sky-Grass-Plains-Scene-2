@@ -3,9 +3,11 @@
 ### Development Hardware
  - IDE: Visual Studio 2022
  - OS: Windows 11
-### Overview
-#### 
+### Description
+#### Overview
 This project is a continuation of the Night Sky and Grass Plains OpenGL and GLSL scene program from the first COMP3015 coursework. The Night Sky Grass Plains project contains a scene mostly as described by the project's title: natural features combined with an eerie atmosphere. While being viewed, the camera will rotate around the scene in order to give the user a better view of the entire scene. The scene also contains fog, which will dynamically change in depth.
+#### Novelty
+The uniqueness of this scene is similar in nature to that of the original Night Sky and Grass Plains scene, in that it focuses on using an ethereal and eerie atmosphere. However, unlike in the first instance where the impression of glistening moonlight is used, a somewhat more disturbing green light is used in context of the green fire implemented in the scene. This is done to increase the disturbing atmosphere of the scene, giving it a nuanced difference to that of the original.
 #### Coursework 2 Changes
 In this implementation of the Night Sky and Grass Plains scene, the three Blinn-Phong lights present in the first iteration have been replaced with three PBR based lights for this iteration. In addition, fire particles with feedback were added, forming a green flame surrounding the tree in the scene. While the skybox was successfully implemented in the first iteration with no issues, the skybox in this iteration has a minor visual artifact, likely caused by the PBR lighting model.
 ### Architecture
@@ -22,6 +24,7 @@ In the first iteration, the skybox was generated in the main shader program, how
 The fire shader program maintains the sole purpose of rendering the fire particles in the scene. It updates the particles' transparency based on their age and determines their rendered positions and velocities.
 ### Demonstrations
  - [YouTube Video](https://www.youtube.com/watch?v=Mw0wJh4uw8w)
+ - [GitHub Repository](https://github.com/AmethystBird/COMP3015CW2)
 
 ### References
  - [Skybox](https://www.pngegg.com/en/png-exlhy)
